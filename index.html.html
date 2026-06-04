@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vapay — Login</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #080810;
+  --surface:   #0e0e1a;
+  --card:      #12121f;
+  --border:    #1e1e30;
+  --border2:   #2a2a40;
+  --accent:    #5b5bd6;
+  --accent2:   #7c7cf0;
+  --glow:      #5b5bd640;
+  --text:      #e8e8f4;
+  --muted:     #6b6b8a;
+  --muted2:    #9898b8;
+  --usdc:      #2775ca;
+  --success:   #22c55e;
+  --danger:    #ef4444;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
+
+/* ── Background ── */
+.bg-layer {
+  position: fixed; inset: 0; z-index: 0;
+  overflow: hidden;
+}
+.bg-mesh {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 20%, #5b5bd618 0%, transparent 60%),
+    radial-gradient(ellipse 40% 60% at 80% 80%, #2775ca14 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 50% 110%, #5b5bd610 0%, transparent 50%);
+}
+.bg-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 48px 48px;
+  opacity: 0.35;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 80%);
+}
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: drift 12s ease-in-out infinite alternate;
+}
+.orb1 { width: 400px; height: 400px; background: #5b5bd620; top: -100px; left: -100px; animation-delay: 0s; }
+.orb2 { width: 300px; height: 300px; background: #2775ca18; bottom: -80px; right: -60px; animation-delay: -6s; }
+.orb3 { width: 200px; height: 200px; background: #a855f715; top: 40%; left: 60%; animation-delay: -3s; }
+@keyframes drift {
+  from { transform: translate(0,0) scale(1); }
+  to   { transform: translate(30px, 20px) scale(1.08); }
+}
+
+/* ── Layout ── */
+.page {
+  position: relative; z-index: 1;
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+/* ── Left Panel ── */
+.left {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 48px;
+  border-right: 1px solid var(--border);
+}
+.logo {
+  display: flex; align-items: center; gap: 12px;
+}
+.logo-icon {
+  width: 40px; height: 40px;
+  background: linear-gradient(135deg, var(--accent), #a78bfa);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  box-shadow: 0 0 24px var(--glow);
+}
+.logo-text {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: -0.5px;
+}
+.logo-text span { color: var(--accent2); }
+
+.left-hero { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 20px 0; }
+
+.hero-tag {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: #5b5bd610; border: 1px solid #5b5bd630;
+  border-radius: 100px; padding: 5px 14px;
+  font-size: 11.5px; color: var(--accent2);
+  letter-spacing: 0.5px;
+  margin-bottom: 28px;
+  width: fit-content;
+}
+.hero-tag::before { content: ''; width: 6px; height: 6px; background: var(--accent2); border-radius: 50%; animation: pulse 2s ease infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+.hero-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 46px;
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -2px;
+  margin-bottom: 20px;
+}
+.hero-title .line2 { color: var(--accent2); }
+
+.hero-sub {
+  font-size: 15px;
+  color: var(--muted2);
+  line-height: 1.65;
+  max-width: 340px;
+  margin-bottom: 40px;
+}
+
+.feature-list { display: flex; flex-direction: column; gap: 14px; }
+.feature-item {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 13.5px; color: var(--muted2);
+}
+.feature-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; flex-shrink: 0;
+}
+
+.left-footer {
+  font-size: 11.5px; color: var(--muted);
+  display: flex; align-items: center; gap: 16px;
+}
+.dot-sep { width: 3px; height: 3px; background: var(--border2); border-radius: 50%; }
+.network-badge {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 6px; padding: 4px 10px; font-size: 11px; color: var(--muted2);
+}
+.network-badge::before { content: ''; width: 6px; height: 6px; background: #22c55e; border-radius: 50%; }
+
+/* ── Right Panel (Auth) ── */
+.right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow: 0 32px 80px #00000060, 0 0 0 1px #ffffff06 inset;
+  animation: slideUp 0.5s cubic-bezier(0.22,1,0.36,1) both;
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Tab switcher */
+.tab-row {
+  display: flex;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 32px;
+  gap: 4px;
+}
+.tab {
+  flex: 1; padding: 9px;
+  border-radius: 9px; border: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13.5px; font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--muted);
+  background: transparent;
+}
+.tab.active {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 4px 16px var(--glow);
+}
+
+/* Form */
+.form-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 22px; font-weight: 700;
+  margin-bottom: 6px; letter-spacing: -0.5px;
+}
+.form-sub {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 28px; line-height: 1.5;
+}
+
+.field { margin-bottom: 16px; }
+.field label {
+  display: block; font-size: 12px; font-weight: 500;
+  color: var(--muted2); margin-bottom: 7px; letter-spacing: 0.3px;
+}
+.field-wrap { position: relative; }
+.field-icon {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  font-size: 16px; pointer-events: none; color: var(--muted);
+}
+.field input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  padding: 12px 14px 12px 42px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.field input::placeholder { color: var(--muted); }
+.field input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--glow);
+}
+.field input.error { border-color: var(--danger); }
+
+.eye-btn {
+  position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer;
+  font-size: 16px; color: var(--muted); padding: 0;
+  transition: color 0.2s;
+}
+.eye-btn:hover { color: var(--muted2); }
+
+.field-hint { font-size: 11px; color: var(--muted); margin-top: 5px; }
+.field-error { font-size: 11px; color: var(--danger); margin-top: 5px; display: none; }
+.field-error.show { display: block; }
+
+.forgot {
+  text-align: right; font-size: 12px;
+  margin-top: -8px; margin-bottom: 20px;
+}
+.forgot a { color: var(--accent2); text-decoration: none; }
+.forgot a:hover { text-decoration: underline; }
+
+/* OTP field */
+.otp-row { display: flex; gap: 8px; }
+.otp-row input {
+  flex: 1; text-align: center;
+  padding: 12px 8px;
+  font-size: 18px; font-weight: 600;
+  letter-spacing: 2px;
+}
+
+/* Submit button */
+.btn-primary {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--accent), #7c3aed);
+  border: none; border-radius: 12px;
+  color: #fff;
+  font-family: 'Syne', sans-serif;
+  font-size: 15px; font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 8px 24px var(--glow);
+  margin-top: 4px;
+  position: relative; overflow: hidden;
+}
+.btn-primary::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, #ffffff20, transparent);
+  opacity: 0; transition: opacity 0.2s;
+}
+.btn-primary:hover::before { opacity: 1; }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 12px 32px var(--glow); }
+.btn-primary:active { transform: translateY(0); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* Divider */
+.divider {
+  display: flex; align-items: center; gap: 12px;
+  margin: 20px 0; color: var(--muted); font-size: 12px;
+}
+.divider::before, .divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+/* Google / Social */
+.btn-social {
+  width: 100%;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13.5px; font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.btn-social:hover { background: var(--border); border-color: var(--accent); }
+
+.switch-text {
+  text-align: center; font-size: 12.5px;
+  color: var(--muted); margin-top: 20px;
+}
+.switch-text a { color: var(--accent2); text-decoration: none; font-weight: 500; cursor: pointer; }
+.switch-text a:hover { text-decoration: underline; }
+
+/* Terms */
+.terms {
+  font-size: 11px; color: var(--muted);
+  text-align: center; margin-top: 14px; line-height: 1.6;
+}
+.terms a { color: var(--muted2); }
+
+/* Spinner */
+.spin {
+  display: inline-block; width: 16px; height: 16px;
+  border: 2px solid #ffffff40; border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  vertical-align: middle; margin-right: 8px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+  background: var(--card); border: 1px solid var(--border2);
+  border-radius: 12px; padding: 12px 20px;
+  font-size: 13.5px; display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 16px 48px #00000080;
+  opacity: 0; transition: opacity 0.3s;
+  z-index: 100; pointer-events: none;
+  white-space: nowrap;
+}
+.toast.show { opacity: 1; }
+.toast.success { border-color: #22c55e40; }
+.toast.error   { border-color: #ef444440; }
+
+/* Step indicator */
+.steps {
+  display: flex; gap: 6px; margin-bottom: 24px;
+}
+.step-dot {
+  height: 3px; border-radius: 2px;
+  background: var(--border2); transition: all 0.3s;
+  flex: 1;
+}
+.step-dot.active { background: var(--accent); }
+.step-dot.done   { background: var(--success); }
+
+/* Password strength */
+.pw-strength { margin-top: 6px; }
+.pw-bar-row { display: flex; gap: 4px; margin-bottom: 4px; }
+.pw-bar { height: 3px; flex: 1; border-radius: 2px; background: var(--border2); transition: background 0.3s; }
+.pw-label { font-size: 11px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="bg-layer">
+  <div class="bg-mesh"></div>
+  <div class="bg-grid"></div>
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+
+<div class="page">
+
+  <!-- ── LEFT ── -->
+  <div class="left">
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      <div class="logo-text">Va<span>pay</span></div>
+    </div>
+
+    <div class="left-hero">
+      <div class="hero-tag">Arc Blockchain · Powered by Circle</div>
+      <h1 class="hero-title">
+        The simplest crypto wallet<br>
+        <span class="line2">on Arc.</span>
+      </h1>
+      <p class="hero-sub">
+        Sign in with email — no seed phrase or private key needed. Send USDC to anyone by @username, as easy as sending a message.
+      </p>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-icon">📧</div>
+          Sign in with email — no crypto wallet needed
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">⚡</div>
+          Sub-second transactions on Arc Testnet
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">💬</div>
+          Chat & tip USDC by @username
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🔒</div>
+          Gas fees in USDC — stable and predictable
+        </div>
+      </div>
+    </div>
+
+    <div class="left-footer">
+      <div class="network-badge">Arc Testnet</div>
+      <div class="dot-sep"></div>
+      <span>© 2026 Vapay</span>
+      <div class="dot-sep"></div>
+      <span>v0.1.0-beta</span>
+    </div>
+  </div>
+
+  <!-- ── RIGHT ── -->
+  <div class="right">
+    <div class="auth-card" id="authCard">
+
+      <!-- Tab row -->
+      <div class="tab-row">
+        <button class="tab active" id="tabLogin" onclick="switchTab('login')">Sign In</button>
+        <button class="tab" id="tabRegister" onclick="switchTab('register')">Sign Up</button>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <div id="loginForm">
+        <div class="form-title">Welcome back 👋</div>
+        <div class="form-sub">Sign in to your Vapay wallet</div>
+
+        <div class="field">
+          <label>EMAIL</label>
+          <div class="field-wrap">
+            <span class="field-icon">✉️</span>
+            <input type="email" id="loginEmail" placeholder="you@email.com" oninput="clearErr('loginEmailErr')">
+          </div>
+          <div class="field-error" id="loginEmailErr">Invalid email address</div>
+        </div>
+
+        <div class="field">
+          <label>PASSWORD</label>
+          <div class="field-wrap">
+            <span class="field-icon">🔑</span>
+            <input type="password" id="loginPass" placeholder="••••••••" oninput="clearErr('loginPassErr')">
+            <button class="eye-btn" onclick="toggleEye('loginPass', this)">👁</button>
+          </div>
+          <div class="field-error" id="loginPassErr">Incorrect password</div>
+        </div>
+
+        <div class="forgot"><a href="#">Forgot password?</a></div>
+
+        <button class="btn-primary" id="loginBtn" onclick="doLogin()">Sign In</button>
+
+        <div class="divider">or</div>
+
+        <button class="btn-social" onclick="toast('Coming soon! 🚀', 'success')">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Continue with Google
+        </button>
+
+        <div class="switch-text">Don't have an account? <a onclick="switchTab('register')">Sign up</a></div>
+      </div>
+
+      <!-- REGISTER FORM -->
+      <div id="registerForm" style="display:none">
+        <!-- Step 1: Info -->
+        <div id="regStep1">
+          <div class="steps">
+            <div class="step-dot active" id="sd1"></div>
+            <div class="step-dot" id="sd2"></div>
+            <div class="step-dot" id="sd3"></div>
+          </div>
+          <div class="form-title">Create new account</div>
+          <div class="form-sub">Step 1 / 3 — Basic information</div>
+
+          <div class="field">
+            <label>USERNAME</label>
+            <div class="field-wrap">
+              <span class="field-icon">@</span>
+              <input type="text" id="regUsername" placeholder="e.g. john_doe" oninput="checkUsername(this)">
+            </div>
+            <div class="field-hint" id="usernameHint">Used to receive funds: @john_doe</div>
+            <div class="field-error" id="usernameErr"></div>
+          </div>
+
+          <div class="field">
+            <label>EMAIL</label>
+            <div class="field-wrap">
+              <span class="field-icon">✉️</span>
+              <input type="email" id="regEmail" placeholder="you@email.com" oninput="clearErr('regEmailErr')">
+            </div>
+            <div class="field-error" id="regEmailErr">Invalid email address</div>
+          </div>
+
+          <div class="field">
+            <label>PASSWORD</label>
+            <div class="field-wrap">
+              <span class="field-icon">🔑</span>
+              <input type="password" id="regPass" placeholder="At least 8 characters" oninput="checkPwStrength(this)">
+              <button class="eye-btn" onclick="toggleEye('regPass', this)">👁</button>
+            </div>
+            <div class="pw-strength">
+              <div class="pw-bar-row">
+                <div class="pw-bar" id="pb1"></div>
+                <div class="pw-bar" id="pb2"></div>
+                <div class="pw-bar" id="pb3"></div>
+                <div class="pw-bar" id="pb4"></div>
+              </div>
+              <div class="pw-label" id="pwLabel">Enter password</div>
+            </div>
+          </div>
+
+          <button class="btn-primary" onclick="goStep2()">Next →</button>
+          <div class="switch-text" style="margin-top:16px">Already have an account? <a onclick="switchTab('login')">Sign in</a></div>
+        </div>
+
+        <!-- Step 2: OTP -->
+        <div id="regStep2" style="display:none">
+          <div class="steps">
+            <div class="step-dot done" id="sd1b"></div>
+            <div class="step-dot active" id="sd2b"></div>
+            <div class="step-dot" id="sd3b"></div>
+          </div>
+          <div class="form-title">Verify your email 📬</div>
+          <div class="form-sub" id="otpSubtitle">Verification code sent to <b></b></div>
+
+          <div class="field" style="margin-bottom:24px">
+            <label>VERIFICATION CODE (6 DIGITS)</label>
+            <div class="otp-row" id="otpInputs">
+              <input type="text" maxlength="1" oninput="otpMove(this,0)" onkeydown="otpBack(event,0)">
+              <input type="text" maxlength="1" oninput="otpMove(this,1)" onkeydown="otpBack(event,1)">
+              <input type="text" maxlength="1" oninput="otpMove(this,2)" onkeydown="otpBack(event,2)">
+              <input type="text" maxlength="1" oninput="otpMove(this,3)" onkeydown="otpBack(event,3)">
+              <input type="text" maxlength="1" oninput="otpMove(this,4)" onkeydown="otpBack(event,4)">
+              <input type="text" maxlength="1" oninput="otpMove(this,5)" onkeydown="otpBack(event,5)">
+            </div>
+          </div>
+
+          <button class="btn-primary" id="otpBtn" onclick="verifyOTP()">Verify</button>
+          <div class="switch-text" style="margin-top:14px">
+            Didn't receive a code? <a onclick="resendOTP()" id="resendLink">Resend</a>
+            <span id="resendTimer" style="display:none;color:var(--muted)"> (<span id="timerNum">60</span>s)</span>
+          </div>
+        </div>
+
+        <!-- Step 3: Success -->
+        <div id="regStep3" style="display:none; text-align:center; padding: 20px 0;">
+          <div style="font-size:56px; margin-bottom:16px; animation: bounceIn 0.5s both">🎉</div>
+          <div class="form-title" style="text-align:center; margin-bottom:8px">Account created!</div>
+          <div class="form-sub" style="text-align:center; margin-bottom:24px">
+            Your Vapay wallet is ready.<br>
+            Your wallet address has been generated automatically.
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:16px 20px;margin-bottom:24px;text-align:left">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:4px">USERNAME</div>
+            <div style="font-size:16px;font-weight:600;color:var(--accent2)" id="successUsername"></div>
+            <div style="font-size:11px;color:var(--muted);margin-top:12px;margin-bottom:4px">ĐỊA CHỈ VÍ (Arc Testnet)</div>
+            <div style="font-size:11px;color:var(--muted2);word-break:break-all;font-family:monospace" id="successAddr"></div>
+          </div>
+          <button class="btn-primary" onclick="goToDashboard()">Go to Dashboard →</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Helpers ─────────────────────────────────
+function $(id) { return document.getElementById(id); }
+
+function toast(msg, type='success') {
+  const t = $('toast');
+  t.innerHTML = (type==='success' ? '✅ ' : '❌ ') + msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function showErr(id, msg) {
+  const el = $(id);
+  if (msg) el.textContent = msg;
+  el.classList.add('show');
+  el.previousElementSibling?.querySelector('input')?.classList.add('error');
+}
+function clearErr(id) {
+  $(id).classList.remove('show');
+}
+
+function toggleEye(inputId, btn) {
+  const el = $(inputId);
+  el.type = el.type === 'password' ? 'text' : 'password';
+  btn.textContent = el.type === 'password' ? '👁' : '🙈';
+}
+
+function setLoading(btnId, loading, label='') {
+  const btn = $(btnId);
+  btn.disabled = loading;
+  btn.innerHTML = loading ? `<span class="spin"></span>Processing…` : label;
+}
+
+// ── Tab switch ───────────────────────────────
+function switchTab(tab) {
+  $('loginForm').style.display    = tab==='login'    ? 'block' : 'none';
+  $('registerForm').style.display = tab==='register' ? 'block' : 'none';
+  $('tabLogin').classList.toggle('active', tab==='login');
+  $('tabRegister').classList.toggle('active', tab==='register');
+  // reset card animation
+  const card = $('authCard');
+  card.style.animation = 'none';
+  requestAnimationFrame(() => card.style.animation = '');
+}
+
+// ── Login ────────────────────────────────────
+function doLogin() {
+  const email = $('loginEmail').value.trim();
+  const pass  = $('loginPass').value;
+  let ok = true;
+
+  if (!email || !email.includes('@')) { showErr('loginEmailErr'); ok = false; }
+  if (!pass || pass.length < 6)       { showErr('loginPassErr', 'Password must be at least 6 characters'); ok = false; }
+  if (!ok) return;
+
+  setLoading('loginBtn', true);
+  setTimeout(() => {
+    setLoading('loginBtn', false, 'Sign In');
+    // Demo: simulate success
+    toast('Signed in successfully! Redirecting…', 'success');
+    setTimeout(() => {
+      document.body.innerHTML = dashboardPreview(email);
+    }, 1200);
+  }, 1500);
+}
+
+// ── Username check ───────────────────────────
+const takenUsernames = ['admin','arc','circle','usdc','wallet'];
+function checkUsername(input) {
+  const val = input.value.toLowerCase().trim();
+  const errEl = $('usernameErr');
+  const hintEl = $('usernameHint');
+  clearErr('usernameErr');
+
+  if (!val) { hintEl.textContent = 'Used to receive funds: @username'; return; }
+  if (val.length < 3) { showErr('usernameErr', 'Minimum 3 characters'); return; }
+  if (!/^[a-z0-9_]+$/.test(val)) { showErr('usernameErr', 'Only lowercase letters, numbers and _'); return; }
+  if (takenUsernames.includes(val)) { showErr('usernameErr', 'This username is already taken'); return; }
+
+  hintEl.textContent = `✓ @${val} — available!`;
+  hintEl.style.color = 'var(--success)';
+  setTimeout(() => hintEl.style.color = '', 2000);
+}
+
+// ── Password strength ────────────────────────
+function checkPwStrength(input) {
+  const v = input.value;
+  const bars = ['pb1','pb2','pb3','pb4'];
+  let score = 0;
+  if (v.length >= 8) score++;
+  if (/[A-Z]/.test(v)) score++;
+  if (/[0-9]/.test(v)) score++;
+  if (/[^A-Za-z0-9]/.test(v)) score++;
+
+  const colors = ['','#ef4444','#f59e0b','#3b82f6','#22c55e'];
+  const labels = ['Enter password','Yếu','Trung bình','Mạnh','Rất mạnh'];
+  bars.forEach((id,i) => {
+    $(id).style.background = i < score ? colors[score] : 'var(--border2)';
+  });
+  $('pwLabel').textContent = labels[score];
+  $('pwLabel').style.color = colors[score] || 'var(--muted)';
+}
+
+// ── Register step 1 → 2 ──────────────────────
+function goStep2() {
+  const username = $('regUsername').value.trim();
+  const email    = $('regEmail').value.trim();
+  const pass     = $('regPass').value;
+  let ok = true;
+
+  if (!username || username.length < 3) { showErr('usernameErr', 'Username must be at least 3 characters'); ok = false; }
+  if (!email || !email.includes('@'))   { showErr('regEmailErr'); ok = false; }
+  if (!pass || pass.length < 8)         { toast('Password must be at least 8 characters', 'error'); ok = false; }
+  if (!ok) return;
+
+  // Show step 2
+  $('regStep1').style.display = 'none';
+  $('regStep2').style.display = 'block';
+  $('otpSubtitle').querySelector('b').textContent = email;
+
+  // Start resend timer
+  startTimer();
+  toast('Verification code sent to ' + email, 'success');
+
+  // Focus first OTP input
+  setTimeout(() => $('otpInputs').querySelectorAll('input')[0].focus(), 100);
+}
+
+// ── OTP inputs ────────────────────────────────
+function otpMove(el, idx) {
+  el.value = el.value.replace(/\D/g,'');
+  const inputs = $('otpInputs').querySelectorAll('input');
+  if (el.value && idx < 5) inputs[idx+1].focus();
+  // Auto verify when all filled
+  const code = Array.from(inputs).map(i=>i.value).join('');
+  if (code.length === 6) verifyOTP();
+}
+function otpBack(e, idx) {
+  if (e.key === 'Backspace') {
+    const inputs = $('otpInputs').querySelectorAll('input');
+    if (!inputs[idx].value && idx > 0) { inputs[idx-1].focus(); inputs[idx-1].value = ''; }
+  }
+}
+
+// ── Verify OTP ────────────────────────────────
+function verifyOTP() {
+  const inputs = $('otpInputs').querySelectorAll('input');
+  const code = Array.from(inputs).map(i=>i.value).join('');
+  if (code.length < 6) { toast('Please enter all 6 digits', 'error'); return; }
+
+  setLoading('otpBtn', true);
+  setTimeout(() => {
+    setLoading('otpBtn', false, 'Verify');
+    // Demo: any 6-digit code works
+    showStep3();
+  }, 1200);
+}
+
+function showStep3() {
+  $('regStep2').style.display = 'none';
+  $('regStep3').style.display = 'block';
+
+  const username = $('regUsername').value.trim();
+  // Generate fake wallet address
+  const addr = '0x' + Array.from({length:40}, ()=>'0123456789abcdef'[Math.floor(Math.random()*16)]).join('');
+
+  $('successUsername').textContent = '@' + username;
+  $('successAddr').textContent = addr;
+}
+
+function goToDashboard() {
+  const username = $('regUsername').value.trim();
+  toast('Welcome @' + username + '! 🎉', 'success');
+  setTimeout(() => {
+    document.body.innerHTML = dashboardPreview($('regEmail').value, username);
+  }, 800);
+}
+
+// ── Resend timer ─────────────────────────────
+let timerInterval;
+function startTimer() {
+  let t = 60;
+  $('resendLink').style.display = 'none';
+  $('resendTimer').style.display = 'inline';
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    $('timerNum').textContent = --t;
+    if (t <= 0) {
+      clearInterval(timerInterval);
+      $('resendLink').style.display = 'inline';
+      $('resendTimer').style.display = 'none';
+    }
+  }, 1000);
+}
+function resendOTP() {
+  toast('Verification code resent!', 'success');
+  startTimer();
+}
+
+// ── Dashboard preview (teaser) ───────────────
+function dashboardPreview(email, username) {
+  const addr = '0x' + Array.from({length:6},()=>'0123456789abcdef'[~~(Math.random()*16)]).join('') + '…' + Array.from({length:4},()=>'0123456789abcdef'[~~(Math.random()*16)]).join('');
+  const uname = username || email.split('@')[0];
+  return `
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',sans-serif;background:#080810;color:#e8e8f4;height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px}
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap');
+    .card{background:#12121f;border:1px solid #1e1e30;border-radius:24px;padding:40px;text-align:center;max-width:400px;width:90%}
+    .icon{font-size:48px;margin-bottom:16px}
+    h2{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;margin-bottom:8px}
+    p{color:#6b6b8a;font-size:14px;line-height:1.6;margin-bottom:20px}
+    .badge{display:inline-flex;align-items:center;gap:8px;background:#5b5bd615;border:1px solid #5b5bd630;border-radius:10px;padding:10px 18px;font-size:14px;color:#7c7cf0;margin-bottom:24px}
+    .btn{background:linear-gradient(135deg,#5b5bd6,#7c3aed);border:none;border-radius:12px;padding:13px 32px;color:#fff;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;width:100%}
+    .sub{font-size:12px;color:#3a3a5a;margin-top:12px}
+  </style>
+  <div class="card">
+    <div class="icon">🎉</div>
+    <h2>Signed in successfully!</h2>
+    <p>Welcome <strong style="color:#e8e8f4">@'${uname}'</strong> to Vapay.</p>
+    <div class="badge">⚡ Địa chỉ ví: ${addr}</div>
+    <p style="font-size:13px">Dashboard is being built. Chat with us to continue!</p>
+    <button class="btn" onclick="window.location.reload()">← Back to Login</button>
+    <div class="sub">Vapay v0.1 · Arc Testnet</div>
+  </div>`;
+}
+</script>
+</body>
+</html>
