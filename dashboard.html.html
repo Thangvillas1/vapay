@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Micropay — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Bricolage+Grotesque:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:#05050a; --surface:#0c0c14; --card:#111119; --card2:#16161f;
+  --border:#1c1c28; --border2:#262636;
+  --accent:#4f46e5; --accent2:#818cf8; --accent3:#c7d2fe;
+  --green:#10b981; --red:#ef4444; --yellow:#f59e0b; --usdc:#2775ca;
+  --text:#f0f0f8; --muted:#64648a; --muted2:#9898b8;
+  --radius:14px; --sidebar:260px; --topbar:58px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:'Bricolage Grotesque',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;}
+
+/* BG */
+.bg-fx{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 60% 50% at 0% 0%,#4f46e510 0%,transparent 55%),
+  radial-gradient(ellipse 40% 40% at 100% 100%,#2775ca0c 0%,transparent 55%);}
+.bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:40px 40px;opacity:.3;
+  mask-image:radial-gradient(ellipse 80% 80% at 50% 0%,black 0%,transparent 70%);}
+
+/* LAYOUT */
+.app{position:relative;z-index:1;height:100vh;display:flex;flex-direction:column;}
+
+/* TOPBAR */
+.topbar{
+  height:var(--topbar);flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px 0 16px;
+  border-bottom:1px solid var(--border);
+  background:#05050aee;backdrop-filter:blur(16px);
+  gap:12px;
+}
+.topbar-left{display:flex;align-items:center;gap:14px;}
+.hamburger{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:18px;padding:4px;display:none;}
+@media(max-width:900px){.hamburger{display:block;}}
+.t-logo{display:flex;align-items:center;gap:8px;text-decoration:none;}
+.t-logo-mark{width:28px;height:28px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:'Clash Display',sans-serif;font-size:13px;font-weight:700;color:#fff;}
+.t-logo-text{font-family:'Clash Display',sans-serif;font-size:16px;font-weight:600;color:var(--text);}
+.topbar-right{display:flex;align-items:center;gap:10px;margin-left:auto;}
+.net-pill{display:flex;align-items:center;gap:5px;background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:5px 12px;font-size:11.5px;color:var(--muted2);}
+.net-pill::before{content:'';width:6px;height:6px;background:var(--green);border-radius:50%;}
+.user-pill{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:4px 12px 4px 5px;font-size:12.5px;cursor:pointer;transition:all .2s;}
+.user-pill:hover{border-color:var(--accent);}
+.avatar{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#a855f7);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;}
+.notif-btn{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:17px;padding:4px;position:relative;transition:color .2s;}
+.notif-btn:hover{color:var(--text);}
+.notif-dot{position:absolute;top:3px;right:3px;width:6px;height:6px;background:var(--red);border-radius:50%;border:1.5px solid var(--bg);}
+
+/* BODY ROW */
+.body-row{flex:1;display:flex;overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{
+  width:var(--sidebar);flex-shrink:0;
+  display:flex;flex-direction:column;
+  border-right:1px solid var(--border);
+  background:var(--surface);
+  overflow-y:auto;
+  transition:transform .3s;
+}
+.sidebar::-webkit-scrollbar{width:3px;}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+@media(max-width:900px){
+  .sidebar{position:fixed;left:0;top:var(--topbar);bottom:0;z-index:80;transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0);}
+}
+
+/* Balance card in sidebar */
+.bal-card{
+  margin:16px;
+  background:linear-gradient(135deg,#1a1a32,#12122a);
+  border:1px solid var(--border2);border-radius:var(--radius);
+  padding:18px;position:relative;overflow:hidden;
+}
+.bal-card::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:radial-gradient(circle,#4f46e620,transparent 70%);border-radius:50%;}
+.bal-label{font-size:10px;color:var(--muted);letter-spacing:.8px;margin-bottom:6px;}
+.bal-amount{font-family:'Clash Display',sans-serif;font-size:26px;font-weight:700;letter-spacing:-1px;margin-bottom:2px;}
+.bal-usdc{font-size:13px;color:var(--usdc);font-weight:600;margin-left:4px;}
+.bal-change{font-size:11px;color:var(--muted);margin-bottom:14px;}
+.bal-change b{color:var(--green);}
+.addr-row{background:#ffffff08;border:1px solid #ffffff10;border-radius:8px;padding:7px 10px;display:flex;align-items:center;justify-content:space-between;}
+.addr-txt{font-size:10.5px;color:var(--muted2);font-family:monospace;}
+.copy-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;transition:color .2s;}
+.copy-btn:hover{color:var(--text);}
+
+/* Sidebar nav */
+.nav-section{padding:10px 12px 4px;}
+.nav-sec-label{font-size:10px;color:var(--muted);letter-spacing:.8px;padding:0 6px;margin-bottom:4px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;cursor:pointer;transition:all .2s;font-size:13.5px;color:var(--muted2);text-decoration:none;margin-bottom:2px;}
+.nav-item:hover{background:var(--card);color:var(--text);}
+.nav-item.active{background:#4f46e518;color:var(--accent2);border:1px solid #4f46e520;}
+.nav-item .ni{font-size:16px;width:20px;text-align:center;}
+.nav-badge{margin-left:auto;background:var(--accent);color:#fff;border-radius:20px;padding:2px 7px;font-size:10px;font-weight:600;}
+
+/* Session key card */
+.session-card{margin:12px 16px;background:var(--card);border:1px solid #4f46e530;border-radius:var(--radius);padding:14px;}
+.sc-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.sc-icon{width:28px;height:28px;background:#4f46e520;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;}
+.sc-title{font-size:12.5px;font-weight:600;}
+.sc-sub{font-size:11px;color:var(--muted);}
+.sc-bar-wrap{background:var(--surface);border-radius:100px;height:5px;margin-bottom:6px;}
+.sc-bar{height:5px;border-radius:100px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:35%;}
+.sc-stats{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);}
+.sc-stats b{color:var(--accent2);}
+.btn-session{width:100%;margin-top:10px;padding:8px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-family:'Bricolage Grotesque',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;transition:opacity .2s;}
+.btn-session:hover{opacity:.85;}
+
+/* MAIN CONTENT */
+.main-content{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;}
+.main-content::-webkit-scrollbar{width:3px;}
+.main-content::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+/* Grid layouts */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid-3{display:grid;grid-template-columns:2fr 1fr;gap:16px;}
+@media(max-width:1100px){.grid-3{grid-template-columns:1fr;}}
+@media(max-width:700px){.grid-2{grid-template-columns:1fr;}.grid-3{grid-template-columns:1fr;}}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-family:'Clash Display',sans-serif;font-size:14px;font-weight:600;letter-spacing:-.2px;}
+.card-body{padding:16px 18px;}
+.card-action{font-size:11.5px;color:var(--accent2);cursor:pointer;transition:color .2s;}
+.card-action:hover{color:var(--accent3);}
+
+/* Chart tabs */
+.chart-tabs{display:flex;gap:4px;}
+.ctab{padding:5px 12px;border-radius:7px;font-size:11.5px;cursor:pointer;border:none;font-family:'Bricolage Grotesque',sans-serif;background:transparent;color:var(--muted2);transition:all .2s;}
+.ctab.active{background:var(--card2);color:var(--text);}
+
+/* Recent TX */
+.tx-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+.tx-item:last-child{border-bottom:none;}
+.tx-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.ti-in{background:#10b98115;color:var(--green);}
+.ti-out{background:#ef444415;color:var(--red);}
+.tx-info{flex:1;}
+.tx-name{font-size:13px;font-weight:500;}
+.tx-time{font-size:11px;color:var(--muted);margin-top:1px;}
+.tx-amt{font-family:'Clash Display',sans-serif;font-size:14px;font-weight:600;}
+.tx-amt.in{color:var(--green);}
+.tx-amt.out{color:var(--red);}
+.tx-status{font-size:10px;color:var(--muted);display:flex;align-items:center;gap:3px;margin-top:1px;justify-content:flex-end;}
+.sdot{width:4px;height:4px;border-radius:50%;}
+.s-ok{background:var(--green);}
+.s-pend{background:var(--yellow);}
+
+/* AI Agent card */
+.agent-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);display:flex;flex-direction:column;}
+.agent-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.agent-av{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#7c3aed);display:flex;align-items:center;justify-content:center;font-size:15px;}
+.agent-info{flex:1;}
+.agent-name{font-family:'Clash Display',sans-serif;font-size:14px;font-weight:600;}
+.agent-status{font-size:11px;color:var(--green);display:flex;align-items:center;gap:4px;}
+.agent-status::before{content:'';width:5px;height:5px;background:var(--green);border-radius:50%;}
+.agent-cost{font-size:11px;color:var(--muted);text-align:right;}
+.agent-cost b{color:var(--accent2);}
+.agent-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;min-height:160px;max-height:200px;}
+.agent-msgs::-webkit-scrollbar{width:2px;}
+.agent-msgs::-webkit-scrollbar-thumb{background:var(--border2);}
+.amsg{display:flex;flex-direction:column;max-width:88%;}
+.amsg.user{align-self:flex-end;align-items:flex-end;}
+.amsg.bot{align-self:flex-start;}
+.abubble{padding:8px 12px;border-radius:12px;font-size:12.5px;line-height:1.5;}
+.amsg.user .abubble{background:var(--accent);color:#fff;border-bottom-right-radius:3px;}
+.amsg.bot .abubble{background:var(--surface);border:1px solid var(--border2);border-bottom-left-radius:3px;}
+.amsg-meta{font-size:10px;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:5px;}
+.tx-pill{background:#10b98115;border:1px solid #10b98130;border-radius:4px;padding:1px 5px;font-size:9.5px;color:var(--green);}
+.agent-input-row{padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:8px;background:var(--card2);border-radius:0 0 var(--radius) var(--radius);}
+.agent-input{flex:1;background:var(--surface);border:1px solid var(--border2);border-radius:9px;padding:8px 12px;color:var(--text);font-family:'Bricolage Grotesque',sans-serif;font-size:12.5px;outline:none;transition:border-color .2s;}
+.agent-input:focus{border-color:var(--accent);}
+.agent-input::placeholder{color:var(--muted);}
+.agent-send{width:34px;height:34px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;flex-shrink:0;}
+.agent-send:hover{background:var(--accent2);}
+
+/* Portfolio donut */
+.portfolio-legend{display:flex;flex-direction:column;gap:8px;margin-top:14px;}
+.legend-item{display:flex;align-items:center;gap:8px;font-size:12px;}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.legend-label{flex:1;color:var(--muted2);}
+.legend-pct{font-weight:600;font-family:'Clash Display',sans-serif;}
+
+/* Quick actions */
+.qa-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.qa-btn{background:var(--card2);border:1px solid var(--border2);border-radius:11px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;transition:all .2s;text-decoration:none;}
+.qa-btn:hover{border-color:var(--accent);transform:translateY(-1px);}
+.qa-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.qi-send{background:#4f46e520;}
+.qi-recv{background:#10b98120;}
+.qi-hist{background:#f5973220;}
+.qa-label{font-size:11.5px;color:var(--muted2);font-weight:500;}
+
+/* Stats row */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+@media(max-width:600px){.stats-row{grid-template-columns:1fr 1fr;}}
+.stat-mini{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:12px 14px;}
+.sm-label{font-size:10.5px;color:var(--muted);margin-bottom:4px;}
+.sm-val{font-family:'Clash Display',sans-serif;font-size:18px;font-weight:700;}
+.sm-val.green{color:var(--green);}
+.sm-val.red{color:var(--red);}
+.sm-val.blue{color:var(--accent2);}
+.sm-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+
+/* Session modal */
+.modal-overlay{position:fixed;inset:0;background:#00000090;backdrop-filter:blur(6px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.show{display:flex;}
+.modal{background:var(--card);border:1px solid var(--border2);border-radius:20px;padding:28px;width:100%;max-width:380px;box-shadow:0 24px 64px #00000080;animation:slideUp .3s ease both;}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.modal-title{font-family:'Clash Display',sans-serif;font-size:20px;font-weight:700;margin-bottom:6px;}
+.modal-sub{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px;}
+.session-detail{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:16px;margin-bottom:20px;}
+.sd-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.sd-row:last-child{border-bottom:none;}
+.sd-key{color:var(--muted);}
+.sd-val{font-weight:600;color:var(--accent2);}
+.modal-field{margin-bottom:14px;}
+.modal-field label{display:block;font-size:11px;color:var(--muted2);letter-spacing:.4px;margin-bottom:6px;}
+.modal-field input{width:100%;background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Bricolage Grotesque',sans-serif;font-size:14px;outline:none;transition:border-color .2s;}
+.modal-field input:focus{border-color:var(--accent);}
+.modal-btn-row{display:flex;gap:10px;}
+.btn-cancel{flex:1;padding:12px;background:transparent;border:1px solid var(--border2);border-radius:10px;color:var(--muted2);font-family:'Bricolage Grotesque',sans-serif;font-size:13.5px;cursor:pointer;transition:all .2s;}
+.btn-cancel:hover{background:var(--surface);color:var(--text);}
+.btn-confirm{flex:1;padding:12px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-family:'Clash Display',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;box-shadow:0 4px 14px #4f46e540;}
+.btn-confirm:hover{background:#4338ca;}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--card2);border:1px solid var(--border2);border-radius:11px;padding:9px 16px;font-size:12.5px;display:flex;align-items:center;gap:7px;box-shadow:0 10px 28px #00000070;opacity:0;transition:opacity .3s;z-index:999;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;}
+
+/* Spinner */
+.spin{display:inline-block;width:12px;height:12px;border:2px solid #fff4;border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:5px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Mobile bottom nav */
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface)ee;border-top:1px solid var(--border);padding:8px 0 max(8px,env(safe-area-inset-bottom));z-index:90;backdrop-filter:blur(12px);}
+.mobile-nav-row{display:flex;justify-content:space-around;}
+.mn-item{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 12px;border-radius:10px;transition:all .2s;color:var(--muted2);}
+.mn-item.active,.mn-item:hover{color:var(--accent2);}
+.mn-icon{font-size:20px;}
+.mn-label{font-size:10px;}
+@media(max-width:900px){
+  .mobile-nav{display:block;}
+  .main-content{padding-bottom:72px;}
+}
+</style>
+</head>
+<body>
+<div class="bg-fx"></div>
+<div class="bg-grid"></div>
+
+<div class="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      <a href="micropay_landing.html" class="t-logo">
+        <div class="t-logo-mark">M</div>
+        <div class="t-logo-text">Micropay</div>
+      </a>
+    </div>
+    <div class="topbar-right">
+      <div class="net-pill">Arc Testnet</div>
+      <button class="notif-btn" onclick="showToast('No new notifications','🔔')">🔔<span class="notif-dot"></span></button>
+      <div class="user-pill" onclick="showToast('Settings coming soon','⚙️')">
+        <div class="avatar" id="topAvatar">J</div>
+        <span id="topUsername">@john_doe</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="body-row">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+
+      <!-- Balance -->
+      <div class="bal-card">
+        <div class="bal-label">TOTAL BALANCE</div>
+        <div class="bal-amount">1,250.00<span class="bal-usdc">USDC</span></div>
+        <div class="bal-change">Arc Testnet · <b>+12.50 today</b></div>
+        <div class="addr-row">
+          <div class="addr-txt">0x3f4a…3f0b</div>
+          <button class="copy-btn" onclick="showToast('Address copied','⎘')">⎘</button>
+        </div>
+      </div>
+
+      <!-- Quick actions -->
+      <div style="padding:0 16px 8px;">
+        <div class="qa-row">
+          <a href="#" class="qa-btn" onclick="showModal('send')"><div class="qa-icon qi-send">↑</div><div class="qa-label">Send</div></a>
+          <a href="#" class="qa-btn" onclick="showModal('receive')"><div class="qa-icon qi-recv">↓</div><div class="qa-label">Receive</div></a>
+          <a href="#" class="qa-btn" onclick="showToast('History loading…','📋')"><div class="qa-icon qi-hist">☰</div><div class="qa-label">History</div></a>
+        </div>
+      </div>
+
+      <!-- Session key -->
+      <div class="session-card">
+        <div class="sc-header">
+          <div class="sc-icon">🔑</div>
+          <div>
+            <div class="sc-title">Session Key</div>
+            <div class="sc-sub">Active · expires in 18h</div>
+          </div>
+        </div>
+        <div class="sc-bar-wrap"><div class="sc-bar" style="width:35%"></div></div>
+        <div class="sc-stats"><span>Spent: <b>3.50 USDC</b></span><span>Limit: <b>10 USDC</b></span></div>
+        <button class="btn-session" onclick="openSession()">⚡ Renew Session</button>
+      </div>
+
+      <!-- Nav links -->
+      <div class="nav-section">
+        <div class="nav-sec-label">WALLET</div>
+        <a class="nav-item active" href="#"><span class="ni">📊</span> Dashboard</a>
+        <a class="nav-item" href="#" onclick="showToast('Transactions page coming soon','📋')"><span class="ni">⇄</span> Transactions</a>
+        <a class="nav-item" href="#" onclick="showToast('Assets page coming soon','💰')"><span class="ni">💰</span> Assets</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-sec-label">AI AGENT</div>
+        <a class="nav-item" href="#" onclick="focusChat()"><span class="ni">💬</span> Chat <span class="nav-badge">Live</span></a>
+        <a class="nav-item" href="#" onclick="showToast('Session history coming soon','🔑')"><span class="ni">🔑</span> Sessions</a>
+        <a class="nav-item" href="#" onclick="showToast('TX feed coming soon','⛓')"><span class="ni">⛓</span> On-chain Feed</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-sec-label">ACCOUNT</div>
+        <a class="nav-item" href="#" onclick="showToast('Settings coming soon','⚙️')"><span class="ni">⚙️</span> Settings</a>
+        <a class="nav-item" href="micropay_landing.html"><span class="ni">↩</span> Sign Out</a>
+      </div>
+
+    </div>
+
+    <!-- MAIN -->
+    <div class="main-content" id="mainContent">
+
+      <!-- Stats row -->
+      <div class="stats-row">
+        <div class="stat-mini"><div class="sm-label">MESSAGES TODAY</div><div class="sm-val blue">47</div><div class="sm-sub">↑ 12 vs yesterday</div></div>
+        <div class="stat-mini"><div class="sm-label">SPENT TODAY</div><div class="sm-val red">−3.50 USDC</div><div class="sm-sub">0.07 avg/msg</div></div>
+        <div class="stat-mini"><div class="sm-label">TRANSACTIONS</div><div class="sm-val green">47 TXs</div><div class="sm-sub">All confirmed</div></div>
+      </div>
+
+      <!-- Chart + Agent -->
+      <div class="grid-3">
+
+        <!-- Transaction chart -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Transaction Activity</div>
+            <div class="chart-tabs">
+              <button class="ctab" onclick="setChartPeriod('D',this)">Daily</button>
+              <button class="ctab active" onclick="setChartPeriod('W',this)">Weekly</button>
+              <button class="ctab" onclick="setChartPeriod('M',this)">Monthly</button>
+            </div>
+          </div>
+          <div class="card-body" style="padding:12px 14px">
+            <canvas id="txChart" height="140"></canvas>
+          </div>
+        </div>
+
+        <!-- AI Agent -->
+        <div class="agent-card" id="agentCard">
+          <div class="agent-header">
+            <div class="agent-av">⚡</div>
+            <div class="agent-info">
+              <div class="agent-name">Vapay Assistant</div>
+              <div class="agent-status">Online · Session active</div>
+            </div>
+            <div class="agent-cost">Per msg<br><b>0.01 USDC</b></div>
+          </div>
+          <div class="agent-msgs" id="agentMsgs">
+            <div class="amsg bot">
+              <div class="abubble">Welcome. Session key active — each message is a verified onchain transaction. How can I assist you?</div>
+              <div class="amsg-meta">Just now</div>
+            </div>
+          </div>
+          <div class="agent-input-row">
+            <input class="agent-input" id="agentIn" placeholder='Try: "send 5 USDC to @minh"' onkeydown="if(event.key==='Enter')sendAgent()"/>
+            <button class="agent-send" onclick="sendAgent()">↑</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Portfolio + Recent TX -->
+      <div class="grid-2">
+
+        <!-- Portfolio breakdown -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Portfolio Breakdown</div>
+            <span class="card-action">Details →</span>
+          </div>
+          <div class="card-body" style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;">
+            <div style="width:140px;height:140px;flex-shrink:0;">
+              <canvas id="donutChart"></canvas>
+            </div>
+            <div class="portfolio-legend" style="flex:1;min-width:120px;">
+              <div class="legend-item"><div class="legend-dot" style="background:#4f46e5"></div><div class="legend-label">USDC (Arc)</div><div class="legend-pct" style="color:#818cf8">58.3%</div></div>
+              <div class="legend-item"><div class="legend-dot" style="background:#2775ca"></div><div class="legend-label">USDC (Other)</div><div class="legend-pct" style="color:#60a5fa">23.5%</div></div>
+              <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div><div class="legend-label">Other</div><div class="legend-pct" style="color:#34d399">12.8%</div></div>
+              <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div><div class="legend-label">Assets</div><div class="legend-pct" style="color:#fbbf24">5.4%</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent transactions -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Recent Transactions</div>
+            <span class="card-action" onclick="showToast('Full history coming soon','📋')">View all →</span>
+          </div>
+          <div class="card-body" style="padding:8px 16px;">
+            <div class="tx-item">
+              <div class="tx-icon ti-in">↓</div>
+              <div class="tx-info"><div class="tx-name">From @minh</div><div class="tx-time">Today · 10:42 AM</div></div>
+              <div style="text-align:right"><div class="tx-amt in">+50.00</div><div class="tx-status"><div class="sdot s-ok"></div><span style="color:var(--green)">Confirmed</span></div></div>
+            </div>
+            <div class="tx-item">
+              <div class="tx-icon ti-out">↑</div>
+              <div class="tx-info"><div class="tx-name">AI Msg #47</div><div class="tx-time">Today · 10:38 AM</div></div>
+              <div style="text-align:right"><div class="tx-amt out">−0.01</div><div class="tx-status"><div class="sdot s-ok"></div><span style="color:var(--green)">Confirmed</span></div></div>
+            </div>
+            <div class="tx-item">
+              <div class="tx-icon ti-out">↑</div>
+              <div class="tx-info"><div class="tx-name">To @linh</div><div class="tx-time">Today · 09:15 AM</div></div>
+              <div style="text-align:right"><div class="tx-amt out">−25.00</div><div class="tx-status"><div class="sdot s-ok"></div><span style="color:var(--green)">Confirmed</span></div></div>
+            </div>
+            <div class="tx-item">
+              <div class="tx-icon ti-in">↓</div>
+              <div class="tx-info"><div class="tx-name">From @tuan</div><div class="tx-time">Yesterday · 6:30 PM</div></div>
+              <div style="text-align:right"><div class="tx-amt in">+100.00</div><div class="tx-status"><div class="sdot s-pend"></div><span style="color:var(--yellow)">Pending</span></div></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div><!-- main-content -->
+  </div><!-- body-row -->
+</div><!-- app -->
+
+<!-- MOBILE BOTTOM NAV -->
+<div class="mobile-nav">
+  <div class="mobile-nav-row">
+    <div class="mn-item active"><div class="mn-icon">📊</div><div class="mn-label">Dashboard</div></div>
+    <div class="mn-item" onclick="focusChat()"><div class="mn-icon">💬</div><div class="mn-label">Chat</div></div>
+    <div class="mn-item" onclick="showToast('Transactions coming soon','⇄')"><div class="mn-icon">⇄</div><div class="mn-label">Transactions</div></div>
+    <div class="mn-item" onclick="showToast('Settings coming soon','⚙️')"><div class="mn-icon">⚙️</div><div class="mn-label">Settings</div></div>
+  </div>
+</div>
+
+<!-- SESSION MODAL -->
+<div class="modal-overlay" id="sessionModal">
+  <div class="modal">
+    <div class="modal-title">🔑 Activate Session Key</div>
+    <div class="modal-sub">Sign once to let the AI agent execute micropayments automatically — no more wallet popups.</div>
+    <div class="session-detail">
+      <div class="sd-row"><span class="sd-key">Spending limit</span><span class="sd-val">10 USDC / 24h</span></div>
+      <div class="sd-row"><span class="sd-key">Per message cost</span><span class="sd-val">~0.01 USDC</span></div>
+      <div class="sd-row"><span class="sd-key">Session duration</span><span class="sd-val">24 hours</span></div>
+      <div class="sd-row"><span class="sd-key">Network</span><span class="sd-val">Arc Testnet</span></div>
+    </div>
+    <div class="modal-field">
+      <label>CUSTOM LIMIT (USDC)</label>
+      <input type="number" id="sessionLimit" value="10" min="1" max="100" placeholder="10"/>
+    </div>
+    <div class="modal-btn-row">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-confirm" id="sessionBtn" onclick="activateSession()">Sign Session Key</button>
+    </div>
+  </div>
+</div>
+
+<!-- SEND MODAL -->
+<div class="modal-overlay" id="sendModal">
+  <div class="modal">
+    <div class="modal-title">↑ Send USDC</div>
+    <div class="modal-sub">Transfer USDC to a username or wallet address instantly.</div>
+    <div class="modal-field"><label>RECIPIENT</label><input type="text" id="sendTo" placeholder="@username or 0x address"/></div>
+    <div class="modal-field"><label>AMOUNT (USDC)</label><input type="number" id="sendAmt" placeholder="0.00"/></div>
+    <div class="modal-btn-row">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-confirm" onclick="doSend()">Confirm Send</button>
+    </div>
+  </div>
+</div>
+
+<!-- RECEIVE MODAL -->
+<div class="modal-overlay" id="receiveModal">
+  <div class="modal">
+    <div class="modal-title">↓ Receive USDC</div>
+    <div class="modal-sub">Share your address to receive USDC on Arc Testnet.</div>
+    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:14px;margin-bottom:20px;">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">WALLET ADDRESS</div>
+      <div style="font-size:11px;font-family:monospace;color:var(--accent2);word-break:break-all;">0x3f4a8b2c1d9e6f7a0b3c5d8e1f4a7b2c9d6e3f0b</div>
+    </div>
+    <div class="modal-btn-row">
+      <button class="btn-cancel" onclick="closeModal()">Close</button>
+      <button class="btn-confirm" onclick="showToast('Address copied','⎘');closeModal()">Copy Address</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Charts ───────────────────────────────────
+const chartData = {
+  W: { labels:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], data:[12,28,19,35,22,47,31] },
+  D: { labels:['6am','9am','12pm','3pm','6pm','9pm','Now'], data:[2,5,9,14,8,12,7] },
+  M: { labels:['W1','W2','W3','W4'], data:[120,185,143,210] }
+};
+
+const txCtx = document.getElementById('txChart').getContext('2d');
+let txChart = new Chart(txCtx, {
+  type:'line',
+  data:{
+    labels: chartData.W.labels,
+    datasets:[{
+      label:'Transactions',
+      data: chartData.W.data,
+      borderColor:'#4f46e5',
+      backgroundColor:'#4f46e515',
+      borderWidth:2,
+      pointBackgroundColor:'#818cf8',
+      pointRadius:4,
+      pointHoverRadius:6,
+      fill:true,
+      tension:0.4
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:true,
+    plugins:{ legend:{display:false}, tooltip:{
+      backgroundColor:'#16161f', borderColor:'#262636', borderWidth:1,
+      titleColor:'#f0f0f8', bodyColor:'#9898b8',
+      callbacks:{ label: c=>' '+c.raw+' transactions' }
+    }},
+    scales:{
+      x:{ grid:{color:'#1c1c28'}, ticks:{color:'#64648a',font:{size:11}} },
+      y:{ grid:{color:'#1c1c28'}, ticks:{color:'#64648a',font:{size:11}}, beginAtZero:true }
+    }
+  }
+});
+
+function setChartPeriod(p, btn){
+  document.querySelectorAll('.ctab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  txChart.data.labels = chartData[p].labels;
+  txChart.data.datasets[0].data = chartData[p].data;
+  txChart.update();
+}
+
+// Donut chart
+const donutCtx = document.getElementById('donutChart').getContext('2d');
+new Chart(donutCtx, {
+  type:'doughnut',
+  data:{
+    labels:['USDC Arc','USDC Other','Other','Assets'],
+    datasets:[{
+      data:[58.3,23.5,12.8,5.4],
+      backgroundColor:['#4f46e5','#2775ca','#10b981','#f59e0b'],
+      borderColor:'#111119', borderWidth:3,
+      hoverBorderColor:'#16161f'
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:true, cutout:'68%',
+    plugins:{ legend:{display:false}, tooltip:{
+      backgroundColor:'#16161f', borderColor:'#262636', borderWidth:1,
+      titleColor:'#f0f0f8', bodyColor:'#9898b8'
+    }}
+  }
+});
+
+// ── AI Agent ─────────────────────────────────
+let msgCount = 0;
+function sendAgent(){
+  const input = document.getElementById('agentIn');
+  const text = input.value.trim();
+  if(!text) return;
+  input.value='';
+  addAgentMsg('user', text, null);
+  setTimeout(()=>{
+    msgCount++;
+    const reply = agentLogic(text);
+    addAgentMsg('bot', reply, `TX#${47+msgCount} · 0.01 USDC`);
+  }, 600);
+}
+
+function addAgentMsg(role, text, txLabel){
+  const c = document.getElementById('agentMsgs');
+  const d = document.createElement('div');
+  d.className = `amsg ${role}`;
+  const time = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  d.innerHTML = `<div class="abubble">${text}</div>
+    <div class="amsg-meta">
+      ${time}
+      ${txLabel ? `<span class="tx-pill">⛓ ${txLabel}</span>` : ''}
+    </div>`;
+  c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+}
+
+function agentLogic(t){
+  const l = t.toLowerCase();
+  if(l.match(/send|transfer/)) return `Confirm: Send <b>${l.match(/\d+(\.\d+)?/)?.[0]||'?'} USDC</b> to <b>${l.match(/@\w+/)?.[0]||'recipient'}</b>? Reply "yes" to execute.`;
+  if(l.match(/balance|how much/)) return 'Your balance is <b>1,250.00 USDC</b> on Arc Testnet.';
+  if(l.match(/session/)) return 'Session Key is active. Limit: <b>10 USDC / 24h</b>. Spent: <b>3.50 USDC</b>. Remaining: <b>6.50 USDC</b>.';
+  if(l.match(/history|transactions/)) return 'Today: 47 transactions · 3.50 USDC spent. Latest: +50 USDC from @minh at 10:42 AM.';
+  if(l.match(/yes|confirm/)) return '✓ Transaction submitted to Arc Testnet. Confirmed in &lt;1 second.';
+  if(l.match(/fee|gas|cost/)) return 'Each message costs ~0.01 USDC in gas on Arc Testnet. Extremely low and predictable.';
+  return 'Micropay only supports wallet transactions and Arc blockchain queries. How can I help?';
+}
+
+function focusChat(){
+  document.getElementById('agentIn').focus();
+  document.getElementById('agentCard').scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+// ── Sidebar toggle (mobile) ──────────────────
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+}
+document.addEventListener('click', e=>{
+  const sb = document.getElementById('sidebar');
+  if(sb.classList.contains('open') && !sb.contains(e.target) && !e.target.closest('.hamburger')){
+    sb.classList.remove('open');
+  }
+});
+
+// ── Modals ───────────────────────────────────
+function showModal(type){
+  if(type==='session') document.getElementById('sessionModal').classList.add('show');
+  if(type==='send')    document.getElementById('sendModal').classList.add('show');
+  if(type==='receive') document.getElementById('receiveModal').classList.add('show');
+}
+function openSession(){ showModal('session'); }
+function closeModal(){
+  document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('show'));
+}
+document.querySelectorAll('.modal-overlay').forEach(el=>{
+  el.addEventListener('click', e=>{ if(e.target===el) closeModal(); });
+});
+
+function activateSession(){
+  const limit = document.getElementById('sessionLimit').value || 10;
+  const btn = document.getElementById('sessionBtn');
+  btn.disabled=true;
+  btn.innerHTML='<span class="spin"></span>Signing…';
+  setTimeout(()=>{
+    closeModal();
+    showToast(`Session Key active · Limit: ${limit} USDC / 24h`,'🔑');
+    btn.disabled=false;
+    btn.textContent='Sign Session Key';
+  }, 1200);
+}
+
+function doSend(){
+  const to = document.getElementById('sendTo').value.trim();
+  const amt = document.getElementById('sendAmt').value;
+  if(!to||!amt){ showToast('Fill in all fields','⚠️'); return; }
+  closeModal();
+  showToast(`Sending ${amt} USDC to ${to}`,'↑');
+}
+
+// ── Toast ────────────────────────────────────
+function showToast(msg, icon='✓'){
+  const t = document.getElementById('toast');
+  t.innerHTML = `<span>${icon}</span> ${msg}`;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
